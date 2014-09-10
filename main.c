@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int isNum(char c) {
+int is_num(char c) {
 	return c <= '9' && c >= '0';
 }
 
-int isOp(char c){
+int is_op(char c){
 	return c == '+' || c == '-' || c == '*' || c == '/';
 }
 
@@ -20,42 +20,54 @@ typedef struct {
 } stack;
 
 stack *make_stack(int n) {
-	stack *stack = calloc(1, sizeof(stack));
-	stack->stack = malloc(n * sizeof(int));
-	return stack;
+	stack *s = calloc(1, sizeof(stack));
+	s->stack = malloc(n * sizeof(int));
+	s->size = n;
+	return s;
 }
 
-void print_stack(stack *stack) {
-	for (int i = 0; i < stack->len; i++) {
-		printf("%d, ", ((int *) stack->stack)[i]);
+void destroy_stack(stack *s) {
+	free(s->stack);
+	free(s);
+}
+
+void print_stack(stack *s) {
+	for (int i = 0; i < s->len; i++) {
+		printf("%d, ", ((int *) s->stack)[i]);
 	}
 	printf("\n");
 }
 
-void push(stack *stack, int n) {
-	((int *) stack->stack)[stack->len++] = n;
+void push(stack *s, int n) {
+	if (s->len >= s->size) {
+		size_t size = ((s->size * sizeof(int)) * 2);
+		s->stack = realloc(s->stack, size);
+		s->size = size;
+	}
+	((int *) s->stack)[s->len++] = n;
 }
 
-int pop(stack *stack) {
-	stack->len--;
-	return ((int *) stack->stack)[stack->len];
+int pop(stack *s) {
+	s->len--;
+	return ((int *) s->stack)[s->len];
 }
 
-void eval(stack *stack, char c) {
-	int a = pop(stack);
-	int b = pop(stack);
+void eval(stack *s, char c) {
+	if (s->len < 2){error("not enough arguments"); return;}
+	int a = pop(s);
+	int b = pop(s);
 	switch (c) {
 		case '+':
-			push(stack, a + b);
+			push(s, a + b);
 			break;
 		case '-':
-			push(stack, a - b);
+			push(s, a - b);
 			break;
 		case '*':
-			push(stack, a * b);
+			push(s, a * b);
 			break;
 		case '/':
-			push(stack, a / b);
+			push(s, a / b);
 			break;
 		default:
 			error("unknown symbol");
@@ -63,33 +75,40 @@ void eval(stack *stack, char c) {
 	}
 }
 
-void readNum(stack *stack) {
+void read_num(stack *s) {
 	char c;
 	char *num = (char *) malloc(100 * sizeof (char));
 	int i = 0;
-	while ((c = getchar()) != EOF && isNum(c)) {
+	while ((c = getchar()) != '\n' && c != EOF && is_num(c)) {
 		num[i++] = c;
 	}
-	num[i] = '\0';
+	ungetc(c, stdin);
 	if (i == 0) {error("no number");}
 	else {
-		push(stack, atoi(num));}
+		char *ptr = &num[i - 1];
+		push(s, (int) strtol(num, &ptr, 10));
+	}
+	free(num);
 }
 
-void read(stack *stack) {
+int read(stack *s) {
 	char c;
-	while ((c = getchar()) != EOF) {
-		if (isNum(c)) {
+	while ((c = getchar()) != '\n' && c != EOF) {
+		if (is_num(c)) {
 			ungetc(c, stdin);
-			readNum(stack);
-		} else if (isOp(c)) {
-			eval(stack, c);
+			read_num(s);
+		} else if (is_op(c)) {
+			eval(s, c);
 		}
 	}
+	if (c == EOF) {return 0;}
+	else {return 1;}
 }
 
 int main () {
 	stack *stack = make_stack(100);
-	read(stack);
-	print_stack(stack);
+	while(read(stack)){
+		print_stack(stack);
+	}
+	destroy_stack(stack);
 }
