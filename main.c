@@ -77,7 +77,7 @@ void eval(stack *s, char c) {
 
 void read_num(stack *s) {
 	char c;
-	char *num = (char *) malloc(100 * sizeof (char));
+	char *num = (char *) calloc(100, sizeof (char));
 	int i = 0;
 	while ((c = getchar()) != '\n' && c != EOF && is_num(c)) {
 		num[i++] = c;
@@ -85,8 +85,7 @@ void read_num(stack *s) {
 	ungetc(c, stdin);
 	if (i == 0) {error("no number");}
 	else {
-		char *ptr = &num[i - 1];
-		push(s, (int) strtol(num, &ptr, 10));
+		push(s, (int) strtol(num, NULL, 10));
 	}
 	free(num);
 }
@@ -107,8 +106,10 @@ int read(stack *s) {
 
 int main () {
 	stack *stack = make_stack(100);
-	while(read(stack)){
-		print_stack(stack);
-	}
+	do {
+		if (stack->len > 0) {print_stack(stack);}
+		printf(": "); // preceeds input
+	} while(read(stack));
+	printf("\n");
 	destroy_stack(stack);
 }
