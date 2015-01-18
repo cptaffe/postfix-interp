@@ -1,10 +1,10 @@
 CFLAGS=-O1 -std=c11 -lm
 CC=clang
 BIN=post
-SRC=main.c
+SRC=main.c stack.c
 
 primes:
-	$(CC) $(CFLAGS) $(SRC) -o $(BIN)
+	$(CC) $(CFLAGS) -o $(BIN) $(SRC)
 
 clean:
 	rm $(BIN)
